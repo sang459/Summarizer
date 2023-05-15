@@ -1,4 +1,3 @@
 PyPDF2
 google.cloud
-google.oauth2
 langchain
