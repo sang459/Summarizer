@@ -1,5 +1,4 @@
 PyPDF2
-tempfile
 google.cloud
 PIL
 langchain
