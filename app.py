@@ -3,6 +3,7 @@ import PyPDF2
 import tempfile
 import os
 
+from google.oauth2.service_account import Credentials
 from google.cloud import vision
 from PIL import Image
 
@@ -15,11 +16,11 @@ from langchain.text_splitter import TokenTextSplitter
 from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
 
-# Set up Google Cloud Vision client
-credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "google_cloud_credentials.json")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-client = vision.ImageAnnotatorClient()
-# 나중에 비공개로 수정
+
+# Create credentials from our GCP secrets
+creds = Credentials.from_service_account_info(st.secrets["gcp"])
+client = vision.ImageAnnotatorClient(credentials=creds)
+
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
 def process_and_convert(files):
