@@ -20,7 +20,7 @@ credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "google_cloud_cre
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 client = vision.ImageAnnotatorClient()
 # 나중에 비공개로 수정
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
 def process_and_convert(files):
     converted_text = ""
