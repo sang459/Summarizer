@@ -5,7 +5,7 @@ import os
 from google.oauth2.service_account import Credentials
 from google.cloud import vision
 from PIL import Image
-from pdfreader import SimplePDFViewer
+import pdfplumber
 
 from langchain import OpenAI, PromptTemplate, LLMChain
 from langchain.prompts import PromptTemplate
@@ -50,15 +50,16 @@ def process_and_convert(files):
                 converted_text += f"Error processing image: {str(e)}"
 
         elif file.type == 'application/pdf':
-            viewer = SimplePDFViewer(file)
-            viewer.render()
-
-            pages = []
-            for canvas in viewer:
-                pages.append(canvas.text_content)
-
-            num_pages = len(pages)
-            converted_text += " ".join(pages)
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.pdf') as temp_pdf:
+                    temp_pdf.write(content)
+                    temp_pdf.seek(0)
+                    with pdfplumber.open(temp_pdf.name) as pdf:
+                        for page in pdf.pages:
+                            converted_text += page.extract_text() + "\n"
+                            
+            except Exception as e:
+                converted_text += f"Error processing PDF file: {str(e)}"
 
         else:
             converted_text += "Unsupported file format. Please upload an image or PDF file."
