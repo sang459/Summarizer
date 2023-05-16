@@ -1,9 +1,9 @@
 streamlit
 pdfplumber
 google-auth
-google-auth-httplib2
 google-auth-oauthlib
 google-cloud-vision
 Pillow
 langchain
 tiktoken
+openai
