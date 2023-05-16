@@ -1,8 +1,9 @@
 streamlit
-PyPDF2
+pdfreader
 google-auth
 google-auth-httplib2
 google-auth-oauthlib
 google-cloud-vision
 Pillow
 langchain
+tiktoken

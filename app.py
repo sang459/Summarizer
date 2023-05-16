@@ -1,15 +1,13 @@
 import streamlit as st
-import PyPDF2
 import tempfile
 import os
 
 from google.oauth2.service_account import Credentials
 from google.cloud import vision
 from PIL import Image
+from pdfreader import SimplePDFViewer
 
 from langchain import OpenAI, PromptTemplate, LLMChain
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains.mapreduce import MapReduceChain
 from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import TokenTextSplitter
@@ -52,8 +50,9 @@ def process_and_convert(files):
                 converted_text += f"Error processing image: {str(e)}"
 
         elif file.type == 'application/pdf':
-            pdf_reader = PyPDF2.PdfFileReader(file)
-            num_pages = pdf_reader.numPages
+            viewer = SimplePDFViewer(file)
+            viewer.render()
+            num_pages = len(viewer.pages)
 
             for page in range(num_pages):
                 page_obj = pdf_reader.getPage(page)
