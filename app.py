@@ -52,12 +52,13 @@ def process_and_convert(files):
         elif file.type == 'application/pdf':
             viewer = SimplePDFViewer(file)
             viewer.render()
-            num_pages = viewer.get_page_count()
 
-            for page_number in range(num_pages):
-                viewer.navigate(page_number + 1)
-                viewer.render()
-                converted_text += viewer.canvas.text_content
+            pages = []
+            for canvas in viewer:
+                pages.append(canvas.text_content)
+
+            num_pages = len(pages)
+            converted_text += " ".join(pages)
 
         else:
             converted_text += "Unsupported file format. Please upload an image or PDF file."
