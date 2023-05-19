@@ -21,7 +21,6 @@ from google.cloud import translate_v2 as translate
 # Create credentials from our GCP secrets
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
-translate_client = translate.Client(credentials=creds)
 
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
@@ -112,11 +111,6 @@ def summary(raw_text):
 
     return summarized_text
 
-def translate_text(text, target_language):
-    result = translate_client.translate(text, target_language=target_language)
-    translated_text = result["translatedText"]
-    return translated_text
-
 def main():
     st.title("Class Material Summarizer")
     st.write("Upload your class handouts and get a summary!")
@@ -146,22 +140,7 @@ def main():
             st.write(summarized_text)
 
     # Button to translate summary
-    if st.button("한국말로 해"):
-        # Check if summarized text is in the session state
-        if 'summarized_text' in st.session_state:
-            translated_summary = translate_text(st.session_state['summarized_text'], "ko")
-            st.header("번역")
-            st.write(translated_summary)
-        else:
-            st.error("No text to translate. Please generate a summary first.")
-
-    
-
-
-
-
-
-
+     
 
         # Button to generate questions
     if st.button("Generate Questions"):
