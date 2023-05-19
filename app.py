@@ -111,14 +111,11 @@ def summary(raw_text):
     return summarized_text
 
 def translate_text(target, text):
-    """Translates text into the target language.
-
-    Target must be an ISO 639-1 language code.
-    See https://cloud.google.com/translate/docs/languages
-    """
-    result = translate_client.translate(text, target_language=target)
-
-    return result['translatedText']
+    try:
+        result = translate_client.translate(text, target_language=target)
+        return result['translatedText']
+    except Exception as e:
+        print(f"An error occurred during translation: {e}")
 
 def main():
     st.title("Class Material Summarizer")
@@ -145,12 +142,13 @@ def main():
             st.write(st.session_state['summarized_text'])
 
             if st.button("Translate Summary into Korean"):
-                # Translation using Google Cloud Translation API
-                translated_text = translate_text('ko', st.session_state['summarized_text'])
-
-                # Display the translated summary
-                st.header("Translated Summary")
-                st.write(translated_text)
+                if 'summarized_text' in st.session_state:
+                    translated_text = translate_text('ko', st.session_state['summarized_text'])
+                    if translated_text:
+                        st.header("Translated Summary")
+                        st.write(translated_text)
+                    else:
+                        st.error("An error occurred during translation. Please try again.")
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
     
