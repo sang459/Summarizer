@@ -9,13 +9,10 @@ import pdfplumber
 
 from langchain import OpenAI, PromptTemplate, LLMChain
 from langchain.prompts import PromptTemplate
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
 from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import TokenTextSplitter
 from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
-from google.cloud import translate_v2 as translate
 
 
 # Create credentials from our GCP secrets
@@ -74,6 +71,7 @@ def summary(raw_text):
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=30)
     texts = text_splitter.split_text(raw_text)
     print(len(texts))
+    print(texts[1])
 
     # document 생성
     docs = [Document(page_content=t) for t in texts]
@@ -121,26 +119,28 @@ def main():
     if uploaded_files and convert_button:
         st.session_state['converted_text'] = process_and_convert(uploaded_files)
 
-        st.header("텍스트 변환")
+        st.header("Converted Text")
         st.write(st.session_state['converted_text'])
 
     # Button to generate summary
-
-    if st.button("요약 생성"):
+    if st.button("Generate Summary"):
         # Check if converted text is in the session state
         if 'converted_text' in st.session_state:
             # Summarization using GPT-3.5 API
             summarized_text = summary(st.session_state['converted_text'])
             
-            # Store the summarized_text in the session state
-            st.session_state['summarized_text'] = summarized_text
-
             # Display the generated summary
             st.header("Summary")
             st.write(summarized_text)
+        else:
+            st.error("No text to summarize. Please upload a file and convert it first.")
+    
 
-    # Button to translate summary
-     
+
+
+
+
+
 
         # Button to generate questions
     if st.button("Generate Questions"):
