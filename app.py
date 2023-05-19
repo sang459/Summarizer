@@ -14,10 +14,12 @@ from langchain.text_splitter import TokenTextSplitter
 from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
 
+from google.cloud import translate_v2 as translate
 
 # Create credentials from our GCP secrets
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
+translate_client = translate.Client(credentials=creds)
 
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
@@ -108,6 +110,16 @@ def summary(raw_text):
 
     return summarized_text
 
+def translate_text(target, text):
+    """Translates text into the target language.
+
+    Target must be an ISO 639-1 language code.
+    See https://cloud.google.com/translate/docs/languages
+    """
+    result = translate_client.translate(text, target_language=target)
+
+    return result['translatedText']
+
 def main():
     st.title("Class Material Summarizer")
     st.write("Upload your class handouts and get a summary!")
@@ -126,11 +138,19 @@ def main():
         # Check if converted text is in the session state
         if 'converted_text' in st.session_state:
             # Summarization using GPT-3.5 API
-            summarized_text = summary(st.session_state['converted_text'])
+            st.session_state['summarized_text'] = summary(st.session_state['converted_text'])
             
             # Display the generated summary
             st.header("Summary")
-            st.write(summarized_text)
+            st.write(st.session_state['summarized_text'])
+
+            if st.button("Translate Summary into Korean"):
+                # Translation using Google Cloud Translation API
+                translated_text = translate_text('ko', st.session_state['summarized_text'])
+
+                # Display the translated summary
+                st.header("Translated Summary")
+                st.write(translated_text)
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
     
