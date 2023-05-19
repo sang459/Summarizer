@@ -140,22 +140,19 @@ def main():
             # Display the generated summary
             st.header("Summary")
             st.write(st.session_state['summarized_text'])
-
-            if st.button("Translate Summary into Korean"):
-                if 'summarized_text' in st.session_state:
-                    translated_text = translate_text('ko', st.session_state['summarized_text'])
-                    if translated_text:
-                        st.header("Translated Summary")
-                        st.write(translated_text)
-                    else:
-                        st.error("An error occurred during translation. Please try again.")
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
-    
+            
+    # Check if summarized text is in the session state
+    if 'summarized_text' in st.session_state:
+        # Button to translate summary into Korean
+        if st.button("Translate Summary into Korean"):
+            # Translation using Google Cloud Translation API
+            st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
 
-
-
-
+            # Display the translated summary
+            st.header("Translated Summary")
+            st.write(st.session_state['translated_text'])
 
 
 
