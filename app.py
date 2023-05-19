@@ -143,7 +143,7 @@ def main():
 
             # Button to translate summary
             if st.button("한국말로 해"):
-                translated_summary = translate_text(st.session_state['converted_text'], "ko")
+                translated_summary = translate_text(summarized_text, "ko")
                 st.header("번역")
                 st.write(translated_summary)
 
