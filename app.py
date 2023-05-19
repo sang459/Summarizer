@@ -71,7 +71,6 @@ def summary(raw_text):
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=30)
     texts = text_splitter.split_text(raw_text)
     print(len(texts))
-    print(texts[1])
 
     # document 생성
     docs = [Document(page_content=t) for t in texts]
