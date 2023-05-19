@@ -111,6 +111,7 @@ def summary(raw_text):
     return summarized_text
 
 def translate_text(target, text):
+    print('hi2')
     try:
         result = translate_client.translate(text, target_language=target)
         print(text)
@@ -149,6 +150,7 @@ def main():
         # Button to translate summary into Korean
         if st.button("Translate Summary into Korean"):
             # Translation using Google Cloud Translation API
+            print('버튼눌림')
             st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
 
             # Display the translated summary
