@@ -19,10 +19,9 @@ from google.cloud import translate_v2 as translate
 
 
 # Create credentials from our GCP secrets
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Credentials.from_service_account_info(st.secrets["gcp"])
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
-translate_client = translate.Client()
+translate_client = translate.Client(credentials=creds)
 
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
