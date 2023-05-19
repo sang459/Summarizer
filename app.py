@@ -113,6 +113,7 @@ def summary(raw_text):
 def translate_text(target, text):
     try:
         result = translate_client.translate(text, target_language=target)
+        print(text)
         return result['translatedText']
     except Exception as e:
         print(f"An error occurred during translation: {e}")
