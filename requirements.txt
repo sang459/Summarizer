@@ -3,6 +3,7 @@ pdfplumber
 google-auth
 google-auth-oauthlib
 google-cloud-vision
+google-cloud-translate
 Pillow
 langchain
 tiktoken
