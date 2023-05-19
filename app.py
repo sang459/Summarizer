@@ -19,10 +19,9 @@ from google.cloud import translate_v2 as translate
 
 
 # Create credentials from our GCP secrets
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Credentials.from_service_account_info(st.secrets["gcp"])
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
-translate_client = translate.Client()
+translate_client = translate.Client(credentials=creds)
 
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
@@ -132,24 +131,30 @@ def main():
         st.write(st.session_state['converted_text'])
 
     # Button to generate summary
+
     if st.button("요약 생성"):
         # Check if converted text is in the session state
         if 'converted_text' in st.session_state:
             # Summarization using GPT-3.5 API
             summarized_text = summary(st.session_state['converted_text'])
             
+            # Store the summarized_text in the session state
+            st.session_state['summarized_text'] = summarized_text
+
             # Display the generated summary
             st.header("Summary")
             st.write(summarized_text)
 
-            # Button to translate summary
-            if st.button("한국말로 해"):
-                translated_summary = translate_text(summarized_text, "ko")
-                st.header("번역")
-                st.write(translated_summary)
-
+    # Button to translate summary
+    if st.button("한국말로 해"):
+        # Check if summarized text is in the session state
+        if 'summarized_text' in st.session_state:
+            translated_summary = translate_text(st.session_state['summarized_text'], "ko")
+            st.header("번역")
+            st.write(translated_summary)
         else:
-            st.error("No text to summarize. Please upload a file and convert it first.")
+            st.error("No text to translate. Please generate a summary first.")
+
     
 
 
