@@ -134,32 +134,38 @@ def main():
 
     # Button to generate summary
     if st.button("Generate Summary"):
-        # Check if converted text is in the session state
         if 'converted_text' in st.session_state:
-            # Summarization using GPT-3.5 API
+            # Generate the summary
             st.session_state['summarized_text'] = summary(st.session_state['converted_text'])
-            
-            # Display the generated summary
+
+            # Clear the old translated text
+            st.session_state['translated_text'] = None
+
             st.header("Summary")
             st.write(st.session_state['summarized_text'])
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
-            
+
     # Check if summarized text is in the session state
     if 'summarized_text' in st.session_state:
-        # Button to translate summary into Korean
-        if st.button("Translate Summary into Korean"):
-            # Translation using Google Cloud Translation API
-            print('버튼눌림')
-            st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
-
-            # Display the translated summary
+        if st.checkbox("Translate Summary to Korean", value=False):
+            # when the toggle is checked, translate and display the translated text
+            # Avoid repeated translations by checking if it's already done
+            if 'translated_text' not in st.session_state:
+                st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
             st.header("Translated Summary")
             st.write(st.session_state['translated_text'])
+        else:
+            # when the toggle is unchecked, display the original text
+            st.header("Original Summary")
+            st.write(st.session_state['summarized_text'])
+
+            
+        
 
 
 
-        # Button to generate questions
+    # Button to generate questions
     if st.button("Generate Questions"):
             # Question generation using GPT-3.5 API
             # Add your code here to make a request to the GPT-3.5 API for question generation
