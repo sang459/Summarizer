@@ -151,20 +151,20 @@ def main():
             st.error("No text to summarize. Please upload a file and convert it first.")
 
     # Check if summarized text is in the session state
-    if 'summarized_text' in st.session_state:
-        if st.checkbox("Translate Summary to Korean", value=False):
+    #if 'summarized_text' in st.session_state:
+        #if st.checkbox("Translate Summary to Korean", value=False):
             # when the toggle is checked, translate and display the translated text
             # Avoid repeated translations by checking if it's already done
             
-            if 'translated_text' not in st.session_state:
-                st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
-            st.header("Translated Summary")
-            st.write(st.session_state['translated_text'])
+            #if 'translated_text' not in st.session_state:
+                #st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
+            #st.header("Translated Summary")
+            #st.write(st.session_state['translated_text'])
 
-        else:
+        #else:
             # when the toggle is unchecked, display the original text
-            st.header("Original Summary")
-            st.write(st.session_state['summarized_text'])
+            #st.header("Original Summary")
+            #st.write(st.session_state['summarized_text'])
 
             
         
