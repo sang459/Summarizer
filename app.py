@@ -166,10 +166,7 @@ def main():
             #st.header("Original Summary")
             #st.write(st.session_state['summarized_text'])
 
-            
-        
-
-
+    
 
     # Button to generate questions
     if st.button("Generate Questions"):
