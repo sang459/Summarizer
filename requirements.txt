@@ -9,3 +9,4 @@ Pillow
 langchain
 tiktoken
 openai
+google-cloud-translate

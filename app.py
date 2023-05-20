@@ -21,6 +21,7 @@ creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
 translate_client = translate.Client(credentials=creds)
 
+
 OPENAI_API_KEY = st.secrets['OPENAI_API_KEY']
 
 def process_and_convert(files):
@@ -110,11 +111,11 @@ def summary(raw_text):
 
     return summarized_text
 
+
 def translate_text(target, text):
-    print('hi2')
     try:
         result = translate_client.translate(text, target_language=target)
-        print(text)
+
         return result['translatedText']
     except Exception as e:
         print(f"An error occurred during translation: {e}")
@@ -138,9 +139,6 @@ def main():
             # Generate the summary
             st.session_state['summarized_text'] = summary(st.session_state['converted_text'])
 
-            # Clear the old translated text
-            st.session_state['translated_text'] = None
-
             st.header("Summary")
             st.write(st.session_state['summarized_text'])
         else:
@@ -153,11 +151,9 @@ def main():
             # Avoid repeated translations by checking if it's already done
             
             if 'translated_text' not in st.session_state:
-                # st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
-                print(translate_text('ko','Hi. This is a sample text.'))
-            # st.header("Translated Summary")
-            # st.write(st.session_state['translated_text'])
-
+                st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
+            st.header("Translated Summary")
+            st.write(st.session_state['translated_text'])
 
         else:
             # when the toggle is unchecked, display the original text
