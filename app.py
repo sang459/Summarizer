@@ -151,10 +151,14 @@ def main():
         if st.checkbox("Translate Summary to Korean", value=False):
             # when the toggle is checked, translate and display the translated text
             # Avoid repeated translations by checking if it's already done
+            
             if 'translated_text' not in st.session_state:
-                st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
-            st.header("Translated Summary")
-            st.write(st.session_state['translated_text'])
+                # st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
+                print(translate_text('ko','Hi. This is a sample text.'))
+            # st.header("Translated Summary")
+            # st.write(st.session_state['translated_text'])
+
+
         else:
             # when the toggle is unchecked, display the original text
             st.header("Original Summary")
