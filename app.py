@@ -8,6 +8,18 @@ from PIL import Image
 import pdfplumber
 
 from langchain import OpenAI, PromptTemplate, LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    AIMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.schema import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage
+)
 from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import TokenTextSplitter
@@ -15,6 +27,9 @@ from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
 
 from google.cloud import translate_v2 as translate
+
+import openai
+
 
 # Create credentials from our GCP secrets
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
@@ -81,22 +96,28 @@ def summary(raw_text):
     # summarize chain 생성 및 실행 (prompt 길이 증가율이 양수)
     # 지금으로선 문서 길이가 너무 길어서 summary가 약 6000토큰 넘어가면 overflow되는 문제 있음
     # 또 다른 방법: chat history 사용하기? (scope 설정하면 비용증가 조절 가능할듯)
-    prompt_template = """FULL TEXT:
+    prompt_template = """
+    Your job is to summarize the given part of the article used as reading material in a university for the student.
+    The summary should include all the important details and key ideas.
+    The summary should be in a well organized markdown style, using headings and bullet points.
+    FULL TEXT:
 
 
     {text}
 
 
-    DETAILED SUMMARY (using markdown headings and bullet points):"""
+    DETAILED SUMMARY (using MARKDOWN HEADINGS and BULLET POINTS):"""
     PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
     refine_template = (
-        "Your job is to produce a summary of the article.\n"
+        "Your job is to summarize the given part of the article used as reading material in a university for the student.\n"
         "This is the existing summary of the article up to a certain point for your context: {existing_answer}\n"
         "The next part of the article is as follows.\n"
         "------------\n"
         "{text}\n"
         "------------\n"
-        "Produce a detailed summary of the given part of the article, using markdown headings and bullet points.\n" # detailed가 중요한듯!
+        "Produce a detailed summary of the given part of the article.\n" # detailed가 중요한듯!
+        "The summary should include all the important details and key ideas."
+        "The summary should be in a well organized markdown style, using headings and bullet points."
     )
     refine_prompt = PromptTemplate(
         input_variables=["existing_answer", "text"],
@@ -138,6 +159,7 @@ def main():
         if 'converted_text' in st.session_state:
             # Generate the summary
             st.session_state['summarized_text'] = summary(st.session_state['converted_text'])
+            print(st.session_state['summarized_text'])
 
             st.header("Summary")
             st.write(st.session_state['summarized_text'])
