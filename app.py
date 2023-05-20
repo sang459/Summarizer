@@ -4,29 +4,11 @@ import os
 
 from google.oauth2.service_account import Credentials
 from google.cloud import vision
+from google.cloud import translate_v2 as translate
 from PIL import Image
 import pdfplumber
 
-from langchain import OpenAI, PromptTemplate, LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    AIMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.schema import (
-    AIMessage,
-    HumanMessage,
-    SystemMessage
-)
-from langchain.prompts import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import TokenTextSplitter
-from langchain.docstore.document import Document
-from langchain.chains.summarize import load_summarize_chain
-
-from google.cloud import translate_v2 as translate
 
 import openai
 
@@ -84,53 +66,41 @@ def process_and_convert(files):
 
     return converted_text
 
-def summary(raw_text):
+def parse(raw_text):
     # raw_text를 split하기
     text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=30)
-    texts = text_splitter.split_text(raw_text)
+    texts = text_splitter.split_text(raw_text) # list[strings]
     print(len(texts))
-
-    # document 생성
-    docs = [Document(page_content=t) for t in texts]
+    return texts
 
     # summarize chain 생성 및 실행 (prompt 길이 증가율이 양수)
     # 지금으로선 문서 길이가 너무 길어서 summary가 약 6000토큰 넘어가면 overflow되는 문제 있음
     # 또 다른 방법: chat history 사용하기? (scope 설정하면 비용증가 조절 가능할듯)
-    prompt_template = """
-    Your job is to summarize the given part of the article used as reading material in a university for the student.
-    The summary should include all the important details and key ideas.
-    The summary should be in a well organized markdown style, using headings and bullet points.
-    FULL TEXT:
+    
+chat_history = [
+        {"role": "system", 
+         "content": """
+        Your job is to summarize the given part of the article used as reading material in a university for the student.
+        The summary should include all the important details and key ideas.
+        Your summary should start by completing the former summary.
+        The summary should be in a well-organized markdown style, using headings and bullet points."""}
+    ]     
 
+def summarize(chunk):
+    new_message = {"role": "user", "content": "{text}".format(text=chunk)}
+    chat_history.append(new_message)
 
-    {text}
-
-
-    DETAILED SUMMARY (using MARKDOWN HEADINGS and BULLET POINTS):"""
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
-    refine_template = (
-        "Your job is to summarize the given part of the article used as reading material in a university for the student.\n"
-        "This is the existing summary of the article up to a certain point for your context: {existing_answer}\n"
-        "The next part of the article is as follows.\n"
-        "------------\n"
-        "{text}\n"
-        "------------\n"
-        "Produce a detailed summary of the given part of the article.\n" # detailed가 중요한듯!
-        "The summary should include all the important details and key ideas."
-        "The summary should be in a well organized markdown style, using headings and bullet points."
+    response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=chat_history
     )
-    refine_prompt = PromptTemplate(
-        input_variables=["existing_answer", "text"],
-        template=refine_template,
-    )
-    # 한 chunk씩 썸머리하고 합쳐서 반환
-    chain = load_summarize_chain(OpenAI(temperature=0, openai_api_key=OPENAI_API_KEY), chain_type="refine", 
-                                 return_intermediate_steps=True, question_prompt=PROMPT, 
-                                 refine_prompt=refine_prompt)
-    summarizations = chain({"input_documents": docs}, return_only_outputs=True)['intermediate_steps']
-    summarized_text = "\n".join(summarizations)
+    resp = response['choices'][0]['message']
 
-    return summarized_text
+    chat_history.append(resp)
+    summary = resp['content']
+
+    return summary
+
 
 
 def translate_text(target, text):
@@ -157,12 +127,16 @@ def main():
     # Button to generate summary
     if st.button("Generate Summary"):
         if 'converted_text' in st.session_state:
-            # Generate the summary
-            st.session_state['summarized_text'] = summary(st.session_state['converted_text'])
-            print(st.session_state['summarized_text'])
+            st.session_state['parsed_text'] = parse(st.session_state['converted_text']) # list[str]
 
+            # Generate the summary
             st.header("Summary")
-            st.write(st.session_state['summarized_text'])
+            st.session_state['summarized_text'] = ''
+            for chunk in st.session_state['parsed_text']:
+                summary = summarize(chunk)
+                print(summary)
+                st.write(summary)
+                st.session_state['summarized_text'] += summary
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
 
