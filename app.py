@@ -92,7 +92,8 @@ def summarize(chunk):
 
     response = openai.ChatCompletion.create(
     model="gpt-4",
-    messages=chat_history
+    messages=chat_history,
+    temperature=0.3
     )
     resp = response['choices'][0]['message']
 
@@ -132,11 +133,20 @@ def main():
             # Generate the summary
             st.header("Summary")
             st.session_state['summarized_text'] = ''
+
+            image_placeholder = st.empty()
+            image_placeholder.image('breakdance.gif')
+            text_placeholder = st.empty()
+            text_placeholder.markdown("요약하는 중...")
+
             for chunk in st.session_state['parsed_text']:
                 summary = summarize(chunk)
                 print(summary)
                 st.write(summary)
                 st.session_state['summarized_text'] += summary
+
+            image_placeholder.empty()
+            text_placeholder.empty()
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
 
