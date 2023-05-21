@@ -1,6 +1,5 @@
 import streamlit as st
 import tempfile
-import os
 
 from google.oauth2.service_account import Credentials
 from google.cloud import vision
@@ -82,7 +81,8 @@ chat_history = [
          "content": """
         Your job is to summarize the given part of the article used as reading material in a university for the student.
         The summary should include all the important details and key ideas.
-        Your summary should start by completing the former summary.
+        If needed, complete the unfinished part of the former summary.
+        Do not rewrite the whole summary each time.
         The summary should be in a well-organized markdown style, using headings and bullet points."""}
     ]     
 
@@ -104,6 +104,7 @@ def summarize(chunk):
 
 
 
+
 def translate_text(target, text):
     try:
         result = translate_client.translate(text, target_language=target)
@@ -113,22 +114,30 @@ def translate_text(target, text):
         print(f"An error occurred during translation: {e}")
 
 def main():
-    st.title("Class Material Summarizer")
-    st.write("Upload your class handouts and get a summary!")
+    st.title("썸머라이저")
+    st.write("수업 자료를 업로드하고 요약을 받으세요!")
 
-    uploaded_files = st.file_uploader("Upload image or PDF files", accept_multiple_files=True)
-    convert_button = st.button("Convert Files")
+    uploaded_files = st.file_uploader("이미지 또는 Pdf 파일 업로드", accept_multiple_files=True)
+    convert_button = st.button("변환하기")
 
     if uploaded_files and convert_button:
-        st.session_state['converted_text'] = process_and_convert(uploaded_files)
+        st.header("변환 결과")
 
-        st.header("Converted Text")
+        image_placeholder = st.empty()
+        image_placeholder.image('breakdance.gif')
+        text_placeholder = st.empty()
+        text_placeholder.markdown("변환하는 중...")
+
+        st.session_state['converted_text'] = process_and_convert(uploaded_files)
         st.write(st.session_state['converted_text'])
 
+        image_placeholder.empty()
+        text_placeholder.empty()
+
     # Button to generate summary
-    if st.button("Generate Summary"):
+    if st.button("요약 생성하기"):
         if 'converted_text' in st.session_state:
-            st.session_state['parsed_text'] = parse(st.session_state['converted_text']) # list[str]
+            st.session_state['parsed_texts'] = parse(st.session_state['converted_text']) # list[str]
 
             # Generate the summary
             st.header("Summary")
@@ -139,11 +148,53 @@ def main():
             text_placeholder = st.empty()
             text_placeholder.markdown("요약하는 중...")
 
-            for chunk in st.session_state['parsed_text']:
-                summary = summarize(chunk)
-                print(summary)
-                st.write(summary)
-                st.session_state['summarized_text'] += summary
+            # streaming
+
+            fin_res = ''
+            fin_res_box = st.empty()
+            for i, chunk in enumerate(st.session_state['parsed_texts']):
+                if i == len(st.session_state['parsed_texts']) -1 :
+                    conclusion = " (Do not make conclusion yet - there's more text to come!)"
+                else:
+                    conclusion = ""
+                
+                print('--------')
+                
+                res_box = st.empty()
+                new_message = {"role": "user", "content": "{text}".format(text=chunk+conclusion)}
+                chat_history.append(new_message)
+                report = []
+                result = ''
+
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=chat_history,
+                    temperature=0.3,
+                    stream=True
+                    )
+                
+                
+                for resp in response:
+                    try:
+                        # join method to concatenate the elements of the list 
+                        # into a single string, 
+                        # then strip out any empty strings
+                        report.append(resp['choices'][0]['delta']['content'])
+                    except KeyError:
+                        report.append(' ')
+                    result = "".join(report)
+                    res_box.markdown(result)
+
+                chat_history.append({"role": "assistant", "content": result})
+                print("결과: " + result)
+                res_box.markdown(result)
+
+            # 원래 코드(no streaming)
+            #for chunk in st.session_state['parsed_texts']:
+                #summary = summarize(chunk)
+                #print(summary)
+                #st.write(summary)
+                #st.session_state['summarized_text'] += summary
 
             image_placeholder.empty()
             text_placeholder.empty()
@@ -172,19 +223,19 @@ def main():
 
 
     # Button to generate questions
-    if st.button("Generate Questions"):
+    #if st.button("Generate Questions"):
             # Question generation using GPT-3.5 API
             # Add your code here to make a request to the GPT-3.5 API for question generation
 
             # Display the generated questions
-            st.header("Questions")
+            #st.header("Questions")
             # for question in questions:
                 # st.write(question)
         
-    if st.button("Chat"):
+    #if st.button("Chat"):
             # Chat feature using GPT-3.5 API
 
-            st.header("Chat")
+            #st.header("Chat")
 
 if __name__ == "__main__":
     main()
