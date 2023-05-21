@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 from google.cloud import vision
 from google.cloud import translate_v2 as translate
 from PIL import Image
+import io
 import pdfplumber
 
 from langchain.text_splitter import TokenTextSplitter
@@ -120,33 +121,7 @@ def main():
     uploaded_files = st.file_uploader("이미지 또는 Pdf 파일 업로드", accept_multiple_files=True)
     convert_button = st.button("변환하기")
 
-    if uploaded_files:
-        if file.type.startswith('image/'):
-            try:
-                images = []
-                for file in uploaded_files:
-                    img = file.read()
-                    images.append(img)
-            except Exception as e:
-                converted_text += f"Error processing image: {str(e)}"
 
-        # Load images
-        images = Image.open(file)  # Replace with your function for loading images
-
-        # Display images with order input
-        order_inputs = []
-        for i, image in enumerate(images):
-            st.image(image)
-            order = st.number_input(f"Order for image {i}", min_value=1, max_value=len(images), value=i+1)
-            order_inputs.append(order)
-
-        # Handle order input
-        order_map = {order: image for order, image in zip(order_inputs, images)}
-        ordered_images = [order_map[i] for i in range(1, len(images)+1)]
-
-        # Redisplay images in new order
-        for image in ordered_images:
-            st.image(image)
 
     if uploaded_files and convert_button:
         st.header("변환 결과")
