@@ -51,12 +51,13 @@ def process_and_convert(files):
 
         elif file.type == 'application/pdf':
             try:
-                with tempfile.NamedTemporaryFile(suffix='.pdf') as temp_pdf:
-                    temp_pdf.write(content)
-                    temp_pdf.seek(0)
-                    with pdfplumber.open(temp_pdf.name) as pdf:
-                        for page in pdf.pages:
-                            converted_text += page.extract_text() + "\n"
+                # Reset the pointer to the start of the file
+                file.seek(0)
+
+                # Open the file directly with pdfplumber
+                with pdfplumber.open(file) as pdf:
+                    for page in pdf.pages:
+                        converted_text += page.extract_text() + "\n"
                             
             except Exception as e:
                 converted_text += f"Error processing PDF file: {str(e)}"
@@ -76,15 +77,19 @@ def parse(raw_text):
     # summarize chain 생성 및 실행 (prompt 길이 증가율이 양수)
     # 지금으로선 문서 길이가 너무 길어서 summary가 약 6000토큰 넘어가면 overflow되는 문제 있음
     # 또 다른 방법: chat history 사용하기? (scope 설정하면 비용증가 조절 가능할듯)
-    
+
+usage = 'ppt'
+usage_prompt = "the ppt slides for university students. You should Minimize prose." if usage == 'ppt' else "an article used as reading material in a university for the student."
+
+
 chat_history = [
         {"role": "system", 
          "content": """
-        Your job is to summarize the given part of the article used as reading material in a university for the student.
+        Your job is to summarize the given part of {usage}
         The summary should include all the important details and key ideas.
         If needed, complete the unfinished part of the former summary.
         Do not rewrite the whole summary each time.
-        The summary should be in a well-organized markdown style, using headings and bullet points."""}
+        The summary should be in a well-structured markdown style, using headings and bullet points.""".format(usage=usage_prompt)}
     ]     
 
 def summarize(chunk):
