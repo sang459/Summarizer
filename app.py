@@ -97,7 +97,7 @@ def summarize(chunk):
     chat_history.append(new_message)
 
     response = openai.ChatCompletion.create(
-    model="gpt-4",
+    model="gpt-3.5-turbo",
     messages=chat_history,
     temperature=0.3
     )
