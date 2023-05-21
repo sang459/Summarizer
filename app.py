@@ -115,7 +115,7 @@ def translate_text(target, text):
 
 def main():
     st.title("썸머라이저")
-    st.write("수업 자료를 업로드하고 요약을 받으세요!")
+    st.write("영어 자료를 업로드하고 요약을 받으세요.")
 
     uploaded_files = st.file_uploader("이미지 또는 Pdf 파일 업로드", accept_multiple_files=True)
     convert_button = st.button("변환하기")
