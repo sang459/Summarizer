@@ -78,7 +78,7 @@ def parse(raw_text):
     # 지금으로선 문서 길이가 너무 길어서 summary가 약 6000토큰 넘어가면 overflow되는 문제 있음
     # 또 다른 방법: chat history 사용하기? (scope 설정하면 비용증가 조절 가능할듯)
 
-usage = 'ppt'
+usage = 'article'
 usage_prompt = "the ppt slides for university students. You should Minimize prose." if usage == 'ppt' else "an article used as reading material in a university for the student."
 
 
@@ -88,7 +88,7 @@ chat_history = [
         Your job is to summarize the given part of {usage}
         The summary should include all the important details and key ideas.
         If needed, complete the unfinished part of the former summary.
-        Do not rewrite the whole summary each time.
+        Be precise, and do not rewrite the whole summary each time.
         The summary should be in a well-structured markdown style, using headings and bullet points.""".format(usage=usage_prompt)}
     ]     
 
@@ -99,7 +99,7 @@ def summarize(chunk):
     response = openai.ChatCompletion.create(
     model="gpt-3.5-turbo",
     messages=chat_history,
-    temperature=0.3
+    temperature=0.2
     )
     resp = response['choices'][0]['message']
 
