@@ -12,6 +12,8 @@ from langchain.text_splitter import TokenTextSplitter
 
 import openai
 
+import time
+
 
 # Create credentials from our GCP secrets
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
@@ -88,27 +90,12 @@ chat_history = [
         Your job is to summarize the given part of {usage}
         The summary should include all the important details and key ideas.
         If needed, complete the unfinished part of the former summary.
-        Be precise, and do not rewrite the whole summary each time.
-        The summary should be in a well-structured markdown style, using headings and bullet points.""".format(usage=usage_prompt)}
-    ]     
-
-def summarize(chunk):
-    new_message = {"role": "user", "content": "{text}".format(text=chunk)}
-    chat_history.append(new_message)
-
-    response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=chat_history,
-    temperature=0.2
-    )
-    resp = response['choices'][0]['message']
-
-    chat_history.append(resp)
-    summary = resp['content']
-
-    return summary
-
-
+        BE PRECISE, and do not rewrite the whole summary each time.
+        The summary should be in the language of the original text.
+        The structure should be coherent with the former summaries.
+        The summary should be in a well-structured markdown style, using headings, subheadings and bullet points.
+        """.format(usage=usage_prompt)}
+    ]
 
 
 def translate_text(target, text):
@@ -142,6 +129,21 @@ def main():
         image_placeholder.empty()
         text_placeholder.empty()
 
+    if 'converted_text' in st.session_state:
+        # Get the text
+        text = st.session_state['converted_text']
+
+        # Create a byte stream of the text
+        text_bytes = text.encode()
+
+        # Create a download button for the byte stream
+        st.download_button(
+            label="Download text file",
+            data=io.BytesIO(text_bytes),
+            file_name="converted_text.txt",
+            mime="text/plain",
+        )
+
     # Button to generate summary
     if st.button("요약 생성하기"):
         if 'converted_text' in st.session_state:
@@ -159,12 +161,18 @@ def main():
             # streaming
 
             fin_res = ''
-            fin_res_box = st.empty()
+            
             for i, chunk in enumerate(st.session_state['parsed_texts']):
+
+                # 마지막 chunk일 경우를 제외하고 결론을 내리지 않게 설정
                 if i == len(st.session_state['parsed_texts']) -1 :
-                    conclusion = " (Do not make conclusion yet - there's more text to come!)"
-                else:
                     conclusion = ""
+                else:
+                    if i > 5:
+                        del chat_history[1]
+                        print(chat_history[1])
+                    conclusion = " (DO NOT MAKE CONCLUSION yet - there's more text to come!)"
+
                 
                 print('--------')
                 
@@ -175,13 +183,14 @@ def main():
                 result = ''
 
                 response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-4" if i == 0 else "gpt-3.5-turbo",
                     messages=chat_history,
                     temperature=0.3,
                     stream=True
                     )
-                
-                
+                print(chat_history)
+                print()
+                            
                 for resp in response:
                     try:
                         # join method to concatenate the elements of the list 
@@ -195,14 +204,11 @@ def main():
 
                 chat_history.append({"role": "assistant", "content": result})
                 print("결과: " + result)
+                fin_res += result
                 res_box.markdown(result)
-
-            # 원래 코드(no streaming)
-            #for chunk in st.session_state['parsed_texts']:
-                #summary = summarize(chunk)
-                #print(summary)
-                #st.write(summary)
-                #st.session_state['summarized_text'] += summary
+                time.sleep(2)
+            
+            st.session_state['converted_text'] = fin_res
 
             image_placeholder.empty()
             text_placeholder.empty()
@@ -210,23 +216,15 @@ def main():
             st.error("No text to summarize. Please upload a file and convert it first.")
 
     # Check if summarized text is in the session state
-    #if 'summarized_text' in st.session_state:
-        #if st.checkbox("Translate Summary to Korean", value=False):
+    # if 'summarized_text' in st.session_state:
+        # if st.checkbox("Translate Summary to Korean", value=False):
             # when the toggle is checked, translate and display the translated text
             # Avoid repeated translations by checking if it's already done
             
-            #if 'translated_text' not in st.session_state:
-                #st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
-            #st.header("Translated Summary")
-            #st.write(st.session_state['translated_text'])
-
-        #else:
-            # when the toggle is unchecked, display the original text
-            #st.header("Original Summary")
-            #st.write(st.session_state['summarized_text'])
-
-            
-        
+            # if 'translated_text' not in st.session_state:
+                # st.session_state['translated_text'] = translate_text('ko', st.session_state['summarized_text'])
+            # st.header("Translated Summary")
+            # st.write(st.session_state['translated_text'])
 
 
 
