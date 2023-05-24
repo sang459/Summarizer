@@ -70,7 +70,7 @@ def process_and_convert(files):
 
 def parse(raw_text):
     # raw_text를 split하기
-    text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=30)
+    text_splitter = TokenTextSplitter(chunk_size=1600, chunk_overlap=30)
     texts = text_splitter.split_text(raw_text) # list[strings]
     print(len(texts))
     return texts
@@ -167,17 +167,11 @@ def main():
                     conclusion = ""
                 else:
                     # context token 수 길어지는거 방지
-                    if 0 < i < 4:
+                    if 0 < i < 3:
                         del chat_history[-2] # user message(본문이라 졸라김)만 삭제
-                    elif i >= 4:
+                    elif i >= 3:
                         del chat_history[1] # 남아있는 요약 중 첫번째 삭제
                         del chat_history[-2] # 남아있는 user message 중 첫번째 삭제
-
-                        # i = 0: [{system}] -> 안삭제 -> [{system}, {user}, {assistant}]
-                        # i = 1: [{system}, {user}, {assistant}] -> [{system}, {assistant}] -> [{system}, {assistant}, {user}, {assistant}]
-                        # i = 2: [{system}, {assistant}, {user}, {assistant}] -> [{system}, {assistant}, {assistant}] -> [{system}, {assistant}, {assistant}, {user}, {assistant}]
-                        # i = 3: [{system}, {assistant}, {assistant}, {user}, {assistant}] -> [{system}, {assistant}, {assistant}, {assistant}] -> [{system}, {assistant}, {assistant}, {assistant}, {user}, {assistant}]
-                        # i = 4: [{system}, {assistant1}, {assistant2}, {assistant3}, {user4}, {assistant4}] -> [{system}, {assistant2}, {assistant3}, {assistant4}] -> [{system}, {assistant2}, {assistant3}, {assistant4}, {user5}, {assistant5}]
                     
                     conclusion = " (DO NOT Rewrite the whole summary, and DO NOT MAKE CONCLUSION yet - there's more text to come!)"
 
