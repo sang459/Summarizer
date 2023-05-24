@@ -14,7 +14,6 @@ import openai
 
 import time
 
-
 # Create credentials from our GCP secrets
 creds = Credentials.from_service_account_info(st.secrets["gcp"])
 client = vision.ImageAnnotatorClient(credentials=creds)
@@ -154,24 +153,33 @@ def main():
             st.session_state['summarized_text'] = ''
 
             image_placeholder = st.empty()
-            image_placeholder.image('breakdance.gif')
             text_placeholder = st.empty()
+            image_placeholder.image('breakdance.gif')
             text_placeholder.markdown("요약하는 중...")
 
             # streaming
 
             fin_res = ''
-            
             for i, chunk in enumerate(st.session_state['parsed_texts']):
 
                 # 마지막 chunk일 경우를 제외하고 결론을 내리지 않게 설정
                 if i == len(st.session_state['parsed_texts']) -1 :
                     conclusion = ""
                 else:
-                    if i > 5:
-                        del chat_history[1]
-                        print(chat_history[1])
-                    conclusion = " (DO NOT MAKE CONCLUSION yet - there's more text to come!)"
+                    # context token 수 길어지는거 방지
+                    if 0 < i < 4:
+                        del chat_history[-2] # user message(본문이라 졸라김)만 삭제
+                    elif i >= 4:
+                        del chat_history[1] # 남아있는 요약 중 첫번째 삭제
+                        del chat_history[-2] # 남아있는 user message 중 첫번째 삭제
+
+                        # i = 0: [{system}] -> 안삭제 -> [{system}, {user}, {assistant}]
+                        # i = 1: [{system}, {user}, {assistant}] -> [{system}, {assistant}] -> [{system}, {assistant}, {user}, {assistant}]
+                        # i = 2: [{system}, {assistant}, {user}, {assistant}] -> [{system}, {assistant}, {assistant}] -> [{system}, {assistant}, {assistant}, {user}, {assistant}]
+                        # i = 3: [{system}, {assistant}, {assistant}, {user}, {assistant}] -> [{system}, {assistant}, {assistant}, {assistant}] -> [{system}, {assistant}, {assistant}, {assistant}, {user}, {assistant}]
+                        # i = 4: [{system}, {assistant1}, {assistant2}, {assistant3}, {user4}, {assistant4}] -> [{system}, {assistant2}, {assistant3}, {assistant4}] -> [{system}, {assistant2}, {assistant3}, {assistant4}, {user5}, {assistant5}]
+                    
+                    conclusion = " (DO NOT Rewrite the whole summary, and DO NOT MAKE CONCLUSION yet - there's more text to come!)"
 
                 
                 print('--------')
@@ -182,20 +190,29 @@ def main():
                 report = []
                 result = ''
 
-                response = openai.ChatCompletion.create(
-                    model="gpt-4" if i == 0 else "gpt-3.5-turbo",
+                # switching 방식 바꿈
+                if i <= 1:
+                    response = openai.ChatCompletion.create(
+                    model= "gpt-4",
                     messages=chat_history,
                     temperature=0.3,
                     stream=True
                     )
+                else:
+                    response = openai.ChatCompletion.create(
+                    model= "gpt-3.5-turbo",
+                    messages=chat_history,
+                    temperature=0.3,
+                    stream=True
+                    )
+                
+                image_placeholder.empty()
+                text_placeholder.empty()
+
                 print(chat_history)
-                print()
-                            
+                
                 for resp in response:
                     try:
-                        # join method to concatenate the elements of the list 
-                        # into a single string, 
-                        # then strip out any empty strings
                         report.append(resp['choices'][0]['delta']['content'])
                     except KeyError:
                         report.append(' ')
@@ -206,12 +223,20 @@ def main():
                 print("결과: " + result)
                 fin_res += result
                 res_box.markdown(result)
-                time.sleep(2)
-            
+
+                image2_placeholder = st.empty()
+                text2_placeholder = st.empty()
+                image2_placeholder.image('breakdance.gif')
+                text2_placeholder.markdown('다음 장 읽어보는 중...')
+
+                time.sleep(15) # Rate Limit 방지
+
+                image2_placeholder.empty()
+                text2_placeholder.empty()
+
+
             st.session_state['converted_text'] = fin_res
 
-            image_placeholder.empty()
-            text_placeholder.empty()
         else:
             st.error("No text to summarize. Please upload a file and convert it first.")
 

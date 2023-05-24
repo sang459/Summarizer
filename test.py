@@ -1,5 +1,6 @@
 import openai
 import streamlit as st
+from langchain.text_splitter import TokenTextSplitter
 
 openai.api_key = st.secrets['OPENAI_API_KEY']
 
@@ -22,7 +23,11 @@ widow, an aggressive business executive, or someone in between. The logic of Tob
 """
 
 ]
-first_chunk = chunk_list[0]
+raw_texts = "".join(chunk_list)
+print('합침')
+text_splitter = TokenTextSplitter(chunk_size=1000, chunk_overlap=30)
+texts = text_splitter.split_text(raw_texts)
+print('쪼갬')
 
 chat_history = [
         {"role": "system", 
@@ -30,25 +35,38 @@ chat_history = [
         Your job is to summarize the given part of the article used as reading material in a university for the student.
         The summary should include all the important details and key ideas.
         Your summary should start by completing the former summary.
+
         The summary should be in a well-organized markdown style, using headings and bullet points."""}
     ]
 
 # {"role": "user", "content": "{text}".format(text=first_chunk)}
 
-for chunk in chunk_list:
+for i, chunk in enumerate(texts):
+    try:
+        new_message = {"role": "user", "content": "{text}".format(text=chunk)}
+        chat_history.append(new_message)
 
-    new_message = {"role": "user", "content": "{text}".format(text=chunk)}
-    chat_history.append(new_message)
+        if i == 0:
+            response = openai.ChatCompletion.create(model="gpt-4", messages=chat_history)
+            print('gpt4로 설정 후 받음')
+        else:
+            response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=chat_history
+        )
+            print('gpt3.5로 설정 후 받음')
+    
+        new_summary = response['choices'][0]['message']
+        print('response 받음')
 
-    response = openai.ChatCompletion.create(
-    model="gpt-4",
-    messages=chat_history
-    )
-    new_summary = response['choices'][0]['message']
+        chat_history.append(new_summary)
+        if i >= 3: del chat_history[1]
 
-    chat_history.append(new_summary)
-    print(new_summary['content'])
+        print(new_summary['content'])
 
+    except Exception as e:
+        print(f"\n\nError: {e}")
+        break
 
     
 
