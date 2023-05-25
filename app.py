@@ -83,6 +83,7 @@ usage = 'article'
 usage_prompt = "the ppt slides for university students. You should Minimize prose." if usage == 'ppt' else "an article used as reading material in a university for the student."
 
 
+
 chat_history = [
         {"role": "system", 
          "content": """
@@ -107,7 +108,8 @@ def translate_text(target, text):
 
 def main():
     st.title("썸머라이저")
-    st.write("영어 자료를 업로드하고 요약을 받으세요.")
+    st.write("영어 자료를 업로드하고 요약을 받으세요. (사실 한글도 됨)")
+    st.write("피드백 https://forms.gle/wSHSXJymNChF7eky7")
 
     uploaded_files = st.file_uploader("이미지 또는 Pdf 파일 업로드", accept_multiple_files=True)
     convert_button = st.button("변환하기")
@@ -184,7 +186,7 @@ def main():
                 report = []
                 result = ''
 
-                # switching 방식 바꿈
+                # max_token 해봤는데 말하다 짤리고 퀄리티 별로임
                 if i <= 1:
                     response = openai.ChatCompletion.create(
                     model= "gpt-4",
@@ -223,7 +225,7 @@ def main():
                 image2_placeholder.image('breakdance.gif')
                 text2_placeholder.markdown('다음 장 읽어보는 중...')
 
-                time.sleep(15) # Rate Limit 방지
+                time.sleep(20) # Rate Limit 방지
 
                 image2_placeholder.empty()
                 text2_placeholder.empty()
@@ -232,7 +234,7 @@ def main():
             st.session_state['converted_text'] = fin_res
 
         else:
-            st.error("No text to summarize. Please upload a file and convert it first.")
+            st.error("요약할 본문이 없습니다. 변환 먼저 해주세요.")
 
     # Check if summarized text is in the session state
     # if 'summarized_text' in st.session_state:
